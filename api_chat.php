@@ -12,7 +12,7 @@ $pesan_user = $_POST['pesan'] ?? 'Tidak ada pesan';
 // 3. Susun data yang akan dikirim ke n8n
 $data_body = [
     'isi_pesan' => $pesan_user,
-    'user_id' => 'user_123' // Anda bisa tambahkan info lain
+    'user_id' => 'user_123' 
 ];
 $data_json = json_encode($data_body);
 
@@ -27,13 +27,13 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
     'Content-Type: application/json',
     'Content-Length: ' . strlen($data_json)
 ]);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Sangat penting!
-curl_setopt($ch, CURLOPT_TIMEOUT, 120); // Beri waktu n8n untuk memproses (misal: 30 detik)
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); 
+curl_setopt($ch, CURLOPT_TIMEOUT, 120); 
 
-// 6. Eksekusi cURL dan TUNGGU balasan dari n8n
+// 6. Eksekusi cURL
 $response_n8n = curl_exec($ch);
 
-// 7. Cek jika ada error cURL
+// 7. Cek jika ada error cURL (Misal: n8n timeout)
 if (curl_errno($ch)) {
     http_response_code(500); // Server Error
     echo json_encode([
@@ -41,30 +41,28 @@ if (curl_errno($ch)) {
         'message' => 'Error cURL: ' . curl_error($ch)
     ]);
     curl_close($ch);
-    exit; // Hentikan script
+    exit; 
 }
 
 // 8. Tutup cURL
 curl_close($ch);
 
-// 9. Proses balasan dari n8n
-// Kita asumsikan n8n membalas dengan format JSON, misal: {"reply": "Ini balasan bot"}
-$data_n8n = json_decode($response_n8n, true);
+// 9. PROSES BALASAN (MODIFIKASI)
+// Kita tidak lagi mem-parsing JSON. Kita anggap balasan n8n adalah Teks Mentah.
 
-// Periksa apakah JSON valid dan ada 'key' balasannya
-if (json_last_error() !== JSON_ERROR_NONE || !isset($data_n8n['reply'])) {
-    // Jika n8n tidak membalas dengan benar
+if (empty($response_n8n)) {
+    // Jika n8n membalas kosong
     http_response_code(500);
     echo json_encode([
         'status' => 'error',
-        'message' => 'Format balasan dari n8n tidak valid.',
-        'raw_response' => $response_n8n // Tampilkan raw response untuk debug
+        'message' => 'Format balasan dari n8n tidak valid (respon kosong).',
+        'raw_response' => $response_n8n 
     ]);
 } else {
-    // 10. KIRIM BALASAN n8n KEMBALI KE JAVASCRIPT
+    // 10. KIRIM BALASAN (Teks Mentah dari n8n) KEMBALI KE JAVASCRIPT
     echo json_encode([
         'status' => 'success',
-        'balasan_dari_n8n' => $data_n8n['reply'] // Ambil 'key' balasan
+        'balasan_dari_n8n' => $response_n8n // Langsung gunakan raw response
     ]);
 }
 
