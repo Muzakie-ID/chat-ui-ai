@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Modern</title>
+    <style>
+        :root {
+            --latar-utama: #f0f4f8;
+            --latar-window: #ffffff;
+            --warna-brand: #007aff;
+            --bubble-user: linear-gradient(135deg, #007aff, #0056b3);
+            --bubble-bot: #e5e5ea;
+            --teks-utama: #1c1c1e;
+            --teks-user: #ffffff;
+            --teks-bot: #1c1c1e;
+            --border-color: #dcdcdc;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--latar-utama);
+            margin: 0;
+            display: grid;
+            place-items: center;
+            min-height: 100vh;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+
+        #chat-window {
+            width: 100%;
+            max-width: 800px; /* Lebar di desktop */
+            height: 85vh; /* Tinggi di desktop */
+            background: var(--latar-window);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        #chat-header {
+            padding: 20px;
+            background: var(--latar-window);
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        #chat-header h2 {
+            margin: 0;
+            color: var(--teks-utama);
+            font-weight: 600;
+        }
+
+        #chat-box {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Styling untuk scrollbar */
+        #chat-box::-webkit-scrollbar {
+            width: 6px;
+        }
+        #chat-box::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+        #chat-box::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+
+        .msg {
+            padding: 12px 18px;
+            border-radius: 20px;
+            max-width: 70%;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+
+        .user-msg {
+            background: var(--bubble-user);
+            color: var(--teks-user);
+            border-bottom-right-radius: 4px;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        .bot-msg {
+            background: var(--bubble-bot);
+            color: var(--teks-bot);
+            border-bottom-left-radius: 4px;
+            align-self: flex-start;
+            margin-right: auto;
+        }
+
+        /* Pesan "..." saat loading */
+        .bot-msg.loading span {
+            display: inline-block;
+            animation: bounce 1.4s infinite both;
+        }
+        .bot-msg.loading span:nth-child(2) { animation-delay: 0.1s; }
+        .bot-msg.loading span:nth-child(3) { animation-delay: 0.2s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+
+        #chat-form {
+            display: flex;
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+            background: var(--latar-window);
+        }
+
+        #chat-input {
+            flex-grow: 1;
+            border: 1px solid var(--border-color);
+            border-radius: 25px;
+            padding: 12px 20px;
+            font-size: 16px;
+            margin-right: 12px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        #chat-input:focus {
+            outline: none;
+            border-color: var(--warna-brand);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        #send-button {
+            border: none;
+            background: var(--warna-brand);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+            transition: background-color 0.3s ease;
+        }
+
+        #send-button:hover {
+            background: #0056b3;
+        }
+
+        #send-button svg {
+            width: 24px;
+            height: 24px;
+            margin-left: 3px; /* visual centering */
+        }
+        
+        /* Media Query untuk Mobile */
+        @media (max-width: 600px) {
+            body {
+                padding: 0;
+            }
+
+            #chat-window {
+                max-width: 100%;
+                height: 100vh; /* Full screen di mobile */
+                border-radius: 0;
+                box-shadow: none;
+            }
+
+            #chat-header {
+                padding: 15px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            }
+
+            #chat-box {
+                padding: 15px;
+            }
+
+            #chat-form {
+                padding: 15px;
+            }
+
+            #chat-input {
+                padding: 10px 18px;
+            }
+
+            #send-button {
+                width: 45px;
+                height: 45px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="chat-window">
+        <header id="chat-header">
+            <h2>Chatbot n8n</h2>
+        </header>
+
+        <main id="chat-box">
+            <div class="msg bot-msg">Halo! 👋 Ada yang bisa saya bantu hari ini?</div>
+        </main>
+
+        <footer id="chat-form-container">
+            <form id="chat-form">
+                <input type="text" id="chat-input" placeholder="Ketik pesan Anda..." autocomplete="off" required>
+                <button id="send-button" type="submit">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2 .01 7z"/>
+                    </svg>
+                </button>
+            </form>
+        </footer>
+    </div>
+
+    <script>
+        // Ambil elemen-elemen penting
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const chatBox = document.getElementById('chat-box');
+        const sendButton = document.getElementById('send-button');
+
+        /**
+         * Fungsi untuk menampilkan pesan di layar
+         * @param {string} sender - 'user' atau 'bot'
+         * @param {string} text - Teks pesan
+         * @param {boolean} [isLoading=false] - Opsional: Tampilkan indikator loading
+         * @returns {HTMLElement} - Elemen div pesan yang baru dibuat
+         */
+        function displayMessage(sender, text, isLoading = false) {
+            const msgDiv = document.createElement('div');
+            msgDiv.classList.add('msg');
+            msgDiv.classList.add(sender === 'user' ? 'user-msg' : 'bot-msg');
+
+            if (isLoading) {
+                // Tampilkan 3 titik animasi loading
+                msgDiv.classList.add('loading');
+                msgDiv.innerHTML = '<span>.</span><span>.</span><span>.</span>';
+            } else {
+                // Tampilkan teks pesan
+                msgDiv.textContent = text;
+            }
+
+            chatBox.appendChild(msgDiv);
+            
+            // Auto-scroll ke pesan terbaru
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return msgDiv; // Kembalikan elemen untuk dihapus nanti jika loading
+        }
+
+        /**
+         * Fungsi saat user mengirim pesan
+         */
+        chatForm.addEventListener('submit', async function(event) {
+            event.preventDefault(); // Mencegah reload halaman
+            
+            const userMessage = chatInput.value.trim();
+            if (userMessage === '') return;
+
+            // 1. Tampilkan pesan pengguna di layar
+            displayMessage('user', userMessage);
+            chatInput.value = ''; // Kosongkan input
+            sendButton.disabled = true; // Nonaktifkan tombol kirim
+
+            // 2. Tampilkan status "mengetik..."
+            const loadingMsg = displayMessage('bot', '', true);
+
+            try {
+                // 3. Kirim pesan ke backend PHP (api_chat.php)
+                const response = await fetch('api_chat.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'pesan=' + encodeURIComponent(userMessage)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Hapus pesan "..."
+                chatBox.removeChild(loadingMsg);
+
+                // 4. Tampilkan balasan dari n8n
+                if (data.status === 'success') {
+                    displayMessage('bot', data.balasan_dari_n8n);
+                } else {
+                    displayMessage('bot', 'Maaf, terjadi error: ' + data.message);
+                }
+
+            } catch (error) {
+                // Hapus pesan "..." jika error
+                if(loadingMsg.parentNode === chatBox) {
+                    chatBox.removeChild(loadingMsg);
+                }
+                console.error('Error:', error);
+                displayMessage('bot', 'Oops! Tidak bisa terhubung ke server.');
+            } finally {
+                sendButton.disabled = false; // Aktifkan kembali tombol kirim
+            }
+        });
+
+        // ---------------------------------------------------
+        // Polling (Bertanya ke Server untuk pesan dari n8n)
+        // ---------------------------------------------------
+    /*    async function cekPesanBaru() {
+            try {
+                // 1. Bertanya ke file cek_pesan.php
+                const response = await fetch('cek_pesan.php');
+                const data = await response.json();
+
+                // 2. Jika server bilang "ada_pesan"
+                if (data.status === 'ada_pesan' && data.pesan.trim() !== '') {
+                    // Tampilkan pesan dari n8n di chat
+                    displayMessage('bot', data.pesan);
+                }
+                // Jika status "tidak_ada_pesan", kita tidak melakukan apa-apa
+                
+            } catch (error) {
+                console.error('Error polling:', error);
+                // Jangan tampilkan error di chat agar tidak mengganggu
+            }
+        }
+
+        // Jalankan fungsi cekPesanBaru() setiap 3 detik (3000 milidetik)
+        // Jika Anda tidak menggunakan fitur 'push' dari n8n, Anda bisa hapus/komentari baris ini
+        setInterval(cekPesanBaru, 6000); */
+
+        // Beri sapaan awal setelah halaman dimuat
+        // displayMessage('bot', 'Halo! 👋 Ada yang bisa saya bantu hari ini?');
+
+    </script>
+</body>
+</html>
