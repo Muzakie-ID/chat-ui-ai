@@ -1,0 +1,15 @@
+services:
+ webserver:
+    build: .  # <-- Memberitahu Docker Compose untuk build dari Dockerfile
+    container_name: apache_webserver_ai
+    restart: always
+    ports:
+      - "8088:80"
+    volumes:
+      - /home/chat-ui-ai:/var/www/html # <-- Path web root untuk Apache
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
